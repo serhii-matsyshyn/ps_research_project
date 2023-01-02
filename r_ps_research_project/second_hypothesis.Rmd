@@ -19,14 +19,16 @@ library(dplyr)
 ```
 
 ## Hypothesis (2): The growth of the urban population has affected the average life expectancy of the population.
-Task: to test this hypothesis on the example of one country.
-Parameters that will be analyzed: indicators of the place of residence (rural area/urban area); average life expectancy.
-Research directions: analysis of changes in the urban population over time;
-analysis of changes in average life expectancy over time; to compare the
-dependence between time changes of the investigated indicators; trace the linear
-relationship between these characteristics (linear regression analysis);
-visualization of research data.  
-
+Task: to test this hypothesis on the example of one country.  
+Parameters that will be analyzed: indicators of the place of residence (rural area/urban area); average life expectancy.  
+  
+Research directions:   
+- analysis of changes in the urban population over time;  
+- analysis of changes in average life expectancy over time;  
+- to compare the dependence between time changes of the investigated indicators;  
+- trace the linear relationship between these characteristics (linear regression analysis);  
+- visualization of research data.  
+   
 We have chosen Finland to test this hypothesis.
 ```{r}
 # csv file reading
@@ -321,7 +323,7 @@ Since the correlation is positive, we can conclude that urban population percent
 It has value of 0.866, which means that there is a strong positive correlation between life expectancy and urban population percentage.
 
 ## Linear regression analysis
-Now we will apply linear regression analysis: it can be used to examine the relationship
+Now we will apply linear regression analysis: it can be used as the main method to examine the relationship
 between the growth of the urban population and the average life expectancy over time.
 
 ```{r}
@@ -356,8 +358,9 @@ This means that 75% of the variance in life expectancy can be explained by urban
 The adjusted R-squared value is a modified version of R-squared that takes into account the number of variables in the model.  
 In this case, the adjusted R-squared value is slightly lower than the R-squared value, at 0.7429.  
 This suggests that some of the improvement in fit due to the inclusion of the urban population variable may be due to chance, rather than a true relationship.
-
-The p-value for the urban population coefficient is very small (8.9e-12), which indicates that the relationship between urban population and life expectancy is statistically significant at a very high level of confidence. In other words, it is very unlikely that this relationship is due to chance.
+  
+The p-value for the urban population coefficient is very small (8.9e-12), which indicates that the relationship between urban population and life expectancy is statistically significant at a very high level of confidence. In other words, it is very unlikely that this relationship is due to chance.  
+  
 Overall, these results support the hypothesis that there is a relationship between the growth of the urban population and the average life expectancy over time.  
 This relationship is positive, meaning that as urban population increases, life expectancy tends to increase as well.
 
