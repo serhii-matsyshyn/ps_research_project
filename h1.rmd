@@ -42,16 +42,19 @@ get.data <- function(Country) {
   yrs = unique(Country$Year)
   birth.rates = c()
   mean.ages = c()
+  reproducible.age.proportions = c()
   for (yr in yrs) {
     by.year = (filter(Country, Year==yr))
     total.pop = sum(filter(by.year, Age.Int!=0.0)$Value)
     people.born = sum(filter(by.year, Age.Int==0.0)$Value)
     birth.rate = people.born/total.pop * 100
     mean.age = sum(filter(by.year, Age.Int!=0.0)$Value * filter(by.year, Age.Int!=0.0)$Age.Int)/total.pop
+    reproducible.age.proportion = sum(filter(by.year, Age.Int>=22.0 & Age.Int<=47.0)$Value)/total.pop*100
     birth.rates <- append(birth.rates, birth.rate)
     mean.ages <- append(mean.ages, mean.age)
+    reproducible.age.proportions <-append(reproducible.age.proportions, reproducible.age.proportion)
   }
-  data = data.frame(year = yrs, birth.rate = birth.rates, mean.age = mean.ages)
+  data = data.frame(year = yrs, birth.rate = birth.rates, mean.age = mean.ages, reproduce = reproducible.age.proportions)
   return(data)
 }
 data.Poland = get.data(Poland)
@@ -60,16 +63,17 @@ data.Bulgaria = get.data(Bulgaria)
 ```
 
 ```{r}
-plot.Country <- function(data.Country) {
-  data.Country.lm <- lm(data.Country$birth.rate ~ data.Country$mean.age)
-  plot(data.Country$mean.age, data.Country$birth.rate, col = "blue", pch = 16, main = "c = 0.5", cex = 1.5, xlim = c(30, 45), ylim = c(0.8, 2.2))
+plot.Country <- function(data.Country, name) {
+  data.Country.lm <- lm(data.Country$birth.rate ~ data.Country$mean.age + data.Country$reproduce) 
+  plot(data.Country$mean.age, data.Country$birth.rate, col = "blue", pch = 16, main = name, cex = 1.5, xlim = c(30, 45), ylim = c(0.8, 2.2))
+  
   abline(data.Country.lm, col = "red", lwd = 2)
   return(data.Country.lm)
 }
 
-data.Poland.lm <- plot.Country(data.Poland)
-data.Hungary.lm <- plot.Country(data.Hungary)
-data.Bulgaria.lm <- plot.Country(data.Bulgaria)
+data.Poland.lm <- plot.Country(data.Poland, "Poland")
+data.Hungary.lm <- plot.Country(data.Hungary, "Hungary")
+data.Bulgaria.lm <- plot.Country(data.Bulgaria, "Bulgaria")
 
 
 ```
@@ -78,11 +82,23 @@ data.Bulgaria.lm <- plot.Country(data.Bulgaria)
 summary(data.Bulgaria.lm)
 ```
 
-The p-value is almost zero for both intercept and coeficient, thus we reject that they're insifnificant
+The p-value is almost zero for both intercept and coefficient, thus we reject that they're insignificant. The determination coefficient varies a lot on a country, but is not lower than 0.65, so there is a fairly good chance for data to fall on regression line.
 
 If we look at these plots, we can see some sort of a curve
 
-But its worth pointing out that life expectancy increases with time in these datasets. Thus there may
+But its worth pointing out that mean age increases with time in these datasets. Thus there must be other factors
+
+something happened in Poland in the 80s
+
+Lets try another approach. Instead of using the mean age as our
+
+And, oh surprise, adding more random variables makes the model more
+
+```{r}
+# data.Poland data.Hungary data.Bulgaria
+plot(data.Poland$mean.age, data.Poland$year, col = "blue", pch = 16, main = "year/mean", cex = 1.5, ylim = c(1960, 2010), xlim = c(30, 45))
+plot(data.Poland$year, data.Poland$birth.rate, col = "blue", pch = 16, main = "rate/year", cex = 1.5, xlim = c(1960, 2010), ylim = c(0.8, 2.2))
+```
 
 ```{r}
 f = TRUE
