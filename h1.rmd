@@ -1,0 +1,135 @@
+```{r}
+#install.packages("gganimate")
+install.packages("gifski")
+require(dplyr)
+library(dplyr)
+library(ggplot2)
+require(gganimate)
+library(gganimate)
+library(gifski)
+```
+
+```{r}
+Poland <- read.csv("final_datasets/Poland_combined__years_with_nan_dropped_True.csv")
+Hungary <- read.csv("final_datasets/Hungary_combined__years_with_nan_dropped_True.csv")
+Bulgaria <- read.csv("final_datasets/Bulgaria_combined__years_with_nan_dropped_True.csv")
+```
+
+```{r}
+
+# mean(as.integer(unlist(strsplit(age, "-"))))
+fix.age <- function(df) {
+  vec = c()
+  for (age in df$Age) {
+    if (grepl("80", age)) {
+      vec <- append(vec, 80)
+    }
+    else {
+      vec <-append(vec, mean(as.integer(unlist(strsplit(age, "-")))))
+    }
+  }
+    return (vec)
+}
+
+
+Poland$Age.Int <- fix.age(Poland)
+Hungary$Age.Int <- fix.age(Hungary)
+Bulgaria$Age.Int <- fix.age(Bulgaria)
+```
+
+```{r}
+get.data <- function(Country) {
+  yrs = unique(Country$Year)
+  birth.rates = c()
+  mean.ages = c()
+  for (yr in yrs) {
+    by.year = (filter(Country, Year==yr))
+    total.pop = sum(filter(by.year, Age.Int!=0.0)$Value)
+    people.born = sum(filter(by.year, Age.Int==0.0)$Value)
+    birth.rate = people.born/total.pop * 100
+    mean.age = sum(filter(by.year, Age.Int!=0.0)$Value * filter(by.year, Age.Int!=0.0)$Age.Int)/total.pop
+    birth.rates <- append(birth.rates, birth.rate)
+    mean.ages <- append(mean.ages, mean.age)
+  }
+  data = data.frame(year = yrs, birth.rate = birth.rates, mean.age = mean.ages)
+  return(data)
+}
+data.Poland = get.data(Poland)
+data.Hungary = get.data(Hungary)
+data.Bulgaria = get.data(Bulgaria)
+```
+
+```{r}
+plot.Country <- function(data.Country) {
+  data.Country.lm <- lm(data.Country$birth.rate ~ data.Country$mean.age)
+  plot(data.Country$mean.age, data.Country$birth.rate, col = "blue", pch = 16, main = "c = 0.5", cex = 1.5, xlim = c(30, 45), ylim = c(0.8, 2.2))
+  abline(data.Country.lm, col = "red", lwd = 2)
+  return(data.Country.lm)
+}
+
+data.Poland.lm <- plot.Country(data.Poland)
+data.Hungary.lm <- plot.Country(data.Hungary)
+data.Bulgaria.lm <- plot.Country(data.Bulgaria)
+
+
+```
+
+```{r}
+summary(data.Bulgaria.lm)
+```
+
+The p-value is almost zero for both intercept and coeficient, thus we reject that they're insifnificant
+
+If we look at these plots, we can see some sort of a curve
+
+But its worth pointing out that life expectancy increases with time in these datasets. Thus there may
+
+```{r}
+f = TRUE
+vec = c()
+# for (yr in 1968:1999) {
+  rbind()
+
+    by.year = (filter(readfile, Year==yr))
+    data <- data.frame(y_axis = by.year$Value,  
+                       x_axis = by.year$Age)
+        options(scipen = 999)
+    # bar is created with the help of
+    # grom_bar() and ggplot() function
+    ggplot(data, aes(x=y_axis, y=x_axis, fill=group)) + 
+  geom_bar(stat='identity')
+
+```
+
+```{r}
+# Make 2 basic states and concatenate them:
+a <- data.frame(group=c("A","B","C"), values=c(3,2,4), frame=rep('a',3))
+b <- data.frame(group=c("A","B","C"), values=c(5,3,7), frame=rep('b',3))
+data <- rbind(a,b)  
+ 
+# Basic barplot:
+ggplot(a, aes(x=group, y=values, fill=group)) + 
+  geom_bar(stat='identity')
+ 
+# Make a ggplot, but add frame=year: one image per year
+myPlot <- ggplot(data, aes(x=group, y=values, fill=group)) + 
+  geom_bar(stat='identity') +
+  theme_bw() +
+  # gganimate specific bits:
+  transition_states(
+    frame,
+    transition_length = 2,
+    state_length = 1
+  ) +
+  ease_aes('sine-in-out') + coord_flip()
+
+# Save at gif:
+animate(myPlot, duration = 5, fps = 20, width = 200, height = 200, renderer = gifski_renderer())
+anim_save("288-animated-barplot-transition.gif")
+```
+
+mean(as.integer(unlist(strsplit(s, "-"))))
+
+```{r}
+rbind()
+```
