@@ -4,7 +4,7 @@ Team: Serhii Matsyshyn, Serhii Ivanov
 [GitHub repository with the project](https://github.com/serhii-matsyshyn/ps_research_project)
 
 See [the main project file in R](ps_research_project_Matsyshyn_Ivanov.Rmd) for the full description of the project.  
-See [the main project file in HTML](ps_research_project_Matsyshyn_Ivanov.html) for the project report.
+See [the main project file in HTML](report/ps_research_project_Matsyshyn_Ivanov.html) for the project report.
 
 ## How the original datasets can be processed
 
