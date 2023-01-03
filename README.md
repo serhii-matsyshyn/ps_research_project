@@ -1,6 +1,13 @@
-# Original dataset processed
+# P&S-2022: Mini-Research Project
 
-## How to use
+Team: Serhii Matsyshyn, Serhii Ivanov  
+[GitHub repository with the project](https://github.com/serhii-matsyshyn/ps_research_project)
+
+See [the main project file in R](ps_research_project%20_Matsyshyn_Ivanov.Rmd) for the full description of the project.
+
+## How the original datasets can be processed
+
+### How to use
 Run step by step, 1 country at a time.  
 Data is saved in `dataset_raw` folder and `final_datasets` folders.  
 Final datasets are saved in `final_datasets` folder.

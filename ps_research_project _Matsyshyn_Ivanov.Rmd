@@ -1,0 +1,629 @@
+---
+title: 'P&S-2022: Mini-Research Project'
+authors: "Matsyshyn Serhii, Ivanov Serhii"
+output:
+  html_document:
+    df_print: paged
+---
+
+Team: Serhii Matsyshyn, Serhii Ivanov\
+[GitHub repository with the project](https://github.com/serhii-matsyshyn/ps_research_project)
+
+## Research aim
+
+The aim of this research project is to examine the potential relationship between age structure of the population and other demographic factors.\
+These factors include birth rate, population aging, urbanization, average life expectancy.\
+We will be testing two hypotheses in order to explore these potential relationships.
+
+Hypothesis (1): the birth rate changes depending on the population ageing.\
+This means that we expect to see a relationship between the proportion of elderly individuals in a population and the overall birth rate.
+
+Hypothesis (2): the growth of the urban population has affected the average life expectancy of the population.\
+This hypothesis suggests that there may be a relationship between the degree of urbanization in a population and its average life expectancy.
+
+To test these hypotheses, we will use the following datasets.
+
+## Datasets
+
+We will use publicly available data from the United Nations Department of Economic and Social Affairs. They provide a wide range of datasets concerning almost all aspects of demography.\
+We will combine two datasets (["Population by age, sex, and urban/rural residence"](http://data.un.org/Data.aspx?d=POP&f=tableCode%3A22) and ["Deaths by age, sex, and urban/rural residence"](http://data.un.org/Data.aspx?q=death&d=POP&f=tableCode%3a7)) to have a dataset consisting of countries, census years, urban/rural residence, gender, age groups, the number of people in each group, and the number of deaths for each age group.
+
+Using such a wide dataset allows us to obtain new intermediate parameters (for example, the percentage of the urban/rural population grouped by other demographic parameters). That is, in the final result, this enriched dataset can be supplemented by us with new parameters, which can help us find interesting dependencies.
+
+## Dataset preparation
+
+One of the main problems with the dataset is that it is not very convenient to work with it in its current form.\
+For example, there are duplicate rows in the dataset, or several census types on the same year.\
+What more, there are various (different for each year/country) age groups, and some of them are half-duplicates (for example, 0, 0-4, 1-4).
+
+That is why we will need to prepare the dataset before we can start working with it.
+
+To do this, we have created a Python scripts that perform the following actions:\
+- Clean main dataset from duplicates and unnecessary columns\
+- Extract information about particular country from both datasets\
+- Clean and normalize age groups, census types for this country\
+- Merge two datasets into one
+
+We have chosen following countries for our research:\
+- Bulgaria\
+- Hungary\
+- Poland\
+- Finland
+
+## Hypothesis (1): the birth rate changes depending on the population ageing.
+
+```{r}
+require(dplyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+Poland <- read.csv("final_datasets/Poland_combined__years_with_nan_dropped_True.csv")
+Hungary <- read.csv("final_datasets/Hungary_combined__years_with_nan_dropped_True.csv")
+Bulgaria <- read.csv("final_datasets/Bulgaria_combined__years_with_nan_dropped_True.csv")
+```
+
+Fixing the dataset to include age as integer and not as a category
+
+```{r}
+fix.age <- function(df) {
+    vec <- c()
+    for (age in df$Age) {
+        if (grepl("80", age)) {
+            vec <- append(vec, 80)
+        } else {
+            vec <- append(vec, mean(as.integer(unlist(strsplit(age, "-")))))
+        }
+    }
+    return(vec)
+}
+
+Poland$Age.Int <- fix.age(Poland)
+Hungary$Age.Int <- fix.age(Hungary)
+Bulgaria$Age.Int <- fix.age(Bulgaria)
+```
+
+Extracting the birthrate, mean age
+
+```{r}
+get.data <- function(Country) {
+    yrs <- unique(Country$Year)
+    birth.rates <- c()
+    mean.ages <- c()
+    for (yr in yrs) {
+        by.year <- (filter(Country, Year == yr))
+        total.pop <- sum(filter(by.year, Age.Int != 0.0)$Value)
+        people.born <- sum(filter(by.year, Age.Int == 0.0)$Value)
+        birth.rate <- people.born / total.pop * 100
+        mean.age <- sum(filter(by.year, Age.Int != 0.0)$Value * filter(by.year, Age.Int != 0.0)$Age.Int) / total.pop
+        birth.rates <- append(birth.rates, birth.rate)
+        mean.ages <- append(mean.ages, mean.age)
+    }
+    data <- data.frame(year = yrs, birth.rate = birth.rates, mean.age = mean.ages)
+    return(data)
+}
+
+data.Poland <- get.data(Poland)
+data.Hungary <- get.data(Hungary)
+data.Bulgaria <- get.data(Bulgaria)
+```
+
+```{r}
+data.Poland
+```
+
+Constructing a linear model to see the relationship between mean.age and birth.rate
+
+```{r}
+plot.Country.mean.age <- function(data.Country, name) {
+    data.Country.lm <- lm(birth.rate ~ mean.age, data = data.Country)
+    plot(data.Country$mean.age, data.Country$birth.rate, col = "blue", pch = 16, main = name, cex = 1.5, xlim = c(30, 45), ylim = c(0.8, 2.2), xlab = "mean.age", ylab = "birth.rate")
+
+    abline(data.Country.lm, col = "red", lwd = 2)
+    return(data.Country.lm)
+}
+
+data.Poland.lm.mean.age <- plot.Country.mean.age(data.Poland, "Poland")
+data.Hungary.lm.mean.age <- plot.Country.mean.age(data.Hungary, "Hungary")
+data.Bulgaria.lm.mean.age <- plot.Country.mean.age(data.Bulgaria, "Bulgaria")
+```
+
+```{r}
+summary(data.Poland.lm.mean.age)
+```
+
+The p-value of the intercept and the coefficient is small, so we reject that they're insignificant. The determination coefficient (0.7046) suggests that the model is pretty accurate
+
+For Bulgaria and Hungary we got $r^2 =0.8755$ and $r^2 =0.6537$ respectively
+
+The graphs form a curve, so there might be other dependencies
+
+```{r}
+plot(data.Poland$year, data.Poland$birth.rate, col = "blue", pch = 16, main = "Poland", cex = 1.5, xlim = c(1960, 2010), ylim = c(0.8, 2.2), xlab = "year", ylab = "birth.rate")
+```
+
+For example, the birthrate improved a little around the time the countries joined the EU, so population age might not be the only factor in the birthrate
+
+Lets see how the proportion of people who are capable of making children affects the birthrate
+
+```{r}
+get.structure <- function(Country, age.low, age.high) {
+    yrs <- unique(Country$Year)
+    reproducible.age.proportions <- c()
+    for (yr in yrs) {
+        by.year <- (filter(Country, Year == yr))
+        total.pop <- sum(filter(by.year, Age.Int != 0.0)$Value)
+        reproducible.age.proportion <- sum(filter(by.year, Age.Int >= age.low & Age.Int <= age.high)$Value) / total.pop * 100
+        reproducible.age.proportions <- append(reproducible.age.proportions, reproducible.age.proportion)
+    }
+    return(reproducible.age.proportions)
+}
+
+
+data.Poland$reproduce <- get.structure(Poland, 17, 50)
+data.Hungary$reproduce <- get.structure(Hungary, 17, 50)
+data.Bulgaria$reproduce <- get.structure(Bulgaria, 17, 50)
+```
+
+Its important to choose the age range. Let it be 17-50
+
+```{r}
+plot.Country.reproduce <- function(data.Country, name) {
+    data.Country.lm <- lm(birth.rate ~ reproduce, data = data.Country)
+    plot(data.Country$reproduce, data.Country$birth.rate, col = "blue", pch = 16, main = name, cex = 1.5, xlim = c(0, 100), ylim = c(0.8, 2.2), xlab = "reproduce", ylab = "birth.rate")
+
+    abline(data.Country.lm, col = "red", lwd = 2)
+    return(data.Country.lm)
+}
+
+data.Hungary.lm.reproduce <- plot.Country.reproduce(data.Hungary, "Hungary")
+```
+
+Looking at the plot, one can see that this model doesn't make much sense
+
+```{r}
+summary(data.Hungary.lm.reproduce)
+```
+
+Just to be sure, the p-value suggests that we cannot reject that the coefficients are zero
+
+But what if we use instead more "productive" ages (17-40)?
+
+```{r}
+data.Poland$reproduce <- get.structure(Poland, 17, 40)
+data.Hungary$reproduce <- get.structure(Hungary, 17, 40)
+data.Bulgaria$reproduce <- get.structure(Bulgaria, 17, 40)
+```
+
+```{r}
+data.Poland.lm.reproduce <- plot.Country.reproduce(data.Poland, "Poland")
+data.Hungary.lm.reproduce <- plot.Country.reproduce(data.Hungary, "Hungary")
+data.Bulgaria.lm.reproduce <- plot.Country.reproduce(data.Bulgaria, "Bulgaria")
+```
+
+Immedeatly, the model looks much more better
+
+```{r}
+summary(data.Poland.lm.reproduce)
+```
+
+The determination coefficient is even better than the one for model using only mean age (0.7647 vs 0.6537) (as well as t-values)
+
+Poland: 0.868
+
+Bulgaria: 0.7693
+
+Combining the knowledge of population age structure and mean age produces an accurate multilinear model
+
+```{r}
+
+data.Poland.lm <- lm(birth.rate ~ reproduce + mean.age, data = data.Poland)
+data.Hungary.lm <- lm(birth.rate ~ reproduce + mean.age, data = data.Hungary)
+data.Bulgaria.lm <- lm(birth.rate ~ reproduce + mean.age, data = data.Bulgaria)
+```
+
+```{r}
+summary(data.Poland.lm)
+```
+
+```{r}
+summary(data.Hungary.lm)
+```
+
+```{r}
+summary(data.Bulgaria.lm)
+```
+
+R-squared Poland: 0.9204
+
+R-squared Hungary: 0.9022
+
+R-squared Bulgaria: 0.9065
+
+Thus we have a linear regression model that explains a lot of variance of a birthrate
+
+### Conclusion:
+
+The the birth rate depends on population mean age and age structure. The increase in age is followed by decrease in birthrate and increase in proportion of people, who can reproduce, is followed by increase in the birthrate.
+
+## Hypothesis (2): The growth of the urban population has affected the average life expectancy of the population.
+
+Task: to test this hypothesis on the example of one country.\
+Parameters that will be analyzed: indicators of the place of residence (rural area/urban area); average life expectancy.
+
+Research directions:\
+- analysis of changes in the urban population over time;\
+- analysis of changes in average life expectancy over time;\
+- to compare the dependence between time changes of the investigated indicators;\
+- trace the linear relationship between these characteristics (linear regression analysis);\
+- visualization of research data.
+
+```{r}
+# install.packages("PHEindicatormethods")
+install.packages("dplyr")
+```
+
+```{r}
+# library(PHEindicatormethods)
+source("r_libraries/phe_life_expectancy.r") # PHE life expectancy library (modified)
+
+library(dplyr)
+```
+
+We have chosen Finland to test this hypothesis.
+
+```{r}
+# csv file reading
+database_filename <- "final_datasets/Finland_combined__years_with_nan_dropped_True_born_sum.csv"
+database <- read.csv(database_filename, header = TRUE, sep = ",")
+```
+
+```{r}
+# print first 50 rows
+head(database, 100)
+```
+
+The data present in dataset for Finland is from 1966 to 2021 years.
+
+```{r}
+years_list <- unique(database$Year)
+years_list
+```
+
+### Life expectancy
+
+We will use "life expectancy at birth" indicator.\
+It is calculated as the average number of years a born child would live if prevailing patterns of mortality at the time of birth were to stay the same throughout the life.\
+We will use "life expectancy at birth" since it is the most commonly used measure of an average life expectancy of a population.\
+We will use library [PHEindicatormethods](https://cran.r-project.org/web/packages/PHEindicatormethods/index.html) to calculate life expectancy. It was slightly modified to work with our data (to accept 0-4 years group, which is suitable in our case).
+
+```{r}
+# save life expectancy for each year in a dataframe
+life_expectancy_df <- data.frame(Year = years_list, Life_expectancy = rep(NA, length(years_list)))
+
+# iterate over each year in Year column
+for (year in years_list) {
+    current_year_data <- database[database$Year == year, ]
+
+    # sum up Values and Deaths for each age group based on year
+    current_year_data_summarized <- current_year_data %>%
+        group_by(Age) %>%
+        summarise(Value = sum(Value), Deaths = sum(Deaths))
+
+    # print(current_year_data_summarized)
+
+    life_expectancy <- phe_life_expectancy(
+        data = current_year_data_summarized,
+        deaths = Deaths,
+        population = Value,
+        startage = Age,
+        age_contents = c(
+            "0 - 4", "5 - 9",
+            "10 - 14", "15 - 19",
+            "20 - 24", "25 - 29",
+            "30 - 34", "35 - 39",
+            "40 - 44", "45 - 49",
+            "50 - 54", "55 - 59",
+            "60 - 64", "65 - 69",
+            "70 - 74", "75 - 79",
+            "80 +"
+        ),
+        le_age = "0 - 4",
+        type = "full",
+        confidence = 0.95
+    )
+    life_expectancy_df[life_expectancy_df$Year == year, "Life_expectancy"] <- life_expectancy$value
+}
+```
+
+We calculated life expectancy for each year.
+
+```{r}
+# print life expectancy for each year
+life_expectancy_df
+```
+
+```{r}
+# plot life expectancy for each year
+plot(life_expectancy_df$Year, life_expectancy_df$Life_expectancy,
+    type = "l",
+    xlab = "Year",
+    ylab = "Life expectancy",
+    main = "Life expectancy in Finland",
+    col = "blue",
+    lwd = 2,
+)
+```
+
+We can see that life expectancy in Finland has been growing over the years.
+
+Now let's see how life expectancy has changed in rural and urban areas.
+
+```{r}
+# save life expectancy for each year in a dataframe
+life_expectancy_rural_urban_df <- data.frame(Year = years_list, Life_expectancy = rep(NA, length(years_list)))
+
+# iterate over each year in Year column
+for (year in years_list) {
+    current_year_data <- database[database$Year == year, ]
+
+    # sum up Values and Deaths for each age group based on year and only rural areas
+    current_year_data_summarized_rural <- current_year_data %>%
+        filter(Area == "Rural") %>%
+        group_by(Age) %>%
+        summarise(Value = sum(Value), Deaths = sum(Deaths))
+
+    # sum up Values and Deaths for each age group based on year and only urban areas
+    current_year_data_summarized_urban <- current_year_data %>%
+        filter(Area == "Urban") %>%
+        group_by(Age) %>%
+        summarise(Value = sum(Value), Deaths = sum(Deaths))
+
+    # print(current_year_data_summarized)
+
+    life_expectancy_rural <- phe_life_expectancy(
+        data = current_year_data_summarized_rural,
+        deaths = Deaths,
+        population = Value,
+        startage = Age,
+        age_contents = c(
+            "0 - 4", "5 - 9",
+            "10 - 14", "15 - 19",
+            "20 - 24", "25 - 29",
+            "30 - 34", "35 - 39",
+            "40 - 44", "45 - 49",
+            "50 - 54", "55 - 59",
+            "60 - 64", "65 - 69",
+            "70 - 74", "75 - 79",
+            "80 +"
+        ),
+        le_age = "0 - 4",
+        type = "full",
+        confidence = 0.95
+    )
+
+    life_expectancy_urban <- phe_life_expectancy(
+        data = current_year_data_summarized_urban,
+        deaths = Deaths,
+        population = Value,
+        startage = Age,
+        age_contents = c(
+            "0 - 4", "5 - 9",
+            "10 - 14", "15 - 19",
+            "20 - 24", "25 - 29",
+            "30 - 34", "35 - 39",
+            "40 - 44", "45 - 49",
+            "50 - 54", "55 - 59",
+            "60 - 64", "65 - 69",
+            "70 - 74", "75 - 79",
+            "80 +"
+        ),
+        le_age = "0 - 4",
+        type = "full",
+        confidence = 0.95
+    )
+
+    life_expectancy_rural_urban_df[life_expectancy_rural_urban_df$Year == year, "Life_expectancy_rural"] <- life_expectancy_rural$value
+    life_expectancy_rural_urban_df[life_expectancy_rural_urban_df$Year == year, "Life_expectancy_urban"] <- life_expectancy_urban$value
+}
+```
+
+```{r}
+life_expectancy_rural_urban_df
+```
+
+```{r}
+# plot life expectancy for rural and urban areas
+plot(life_expectancy_rural_urban_df$Year,
+    life_expectancy_rural_urban_df$Life_expectancy_rural,
+    type = "l",
+    xlab = "Year",
+    ylab = "Life expectancy",
+    main = "Life expectancy in rural and urban areas in Finland",
+    col = "blue",
+    lwd = 2,
+)
+par(new = TRUE)
+plot(life_expectancy_rural_urban_df$Year,
+    life_expectancy_rural_urban_df$Life_expectancy_urban,
+    type = "l",
+    col = "red",
+    axes = FALSE, xlab = "", ylab = "",
+    lwd = 2
+)
+axis(
+    side = 4,
+    at = pretty(range(life_expectancy_rural_urban_df$Life_expectancy_rural)),
+)
+mtext("%", side = 4, line = 1)
+
+legend("topleft",
+    legend = c("Life expectancy in rural areas", "Life expectancy in urban areas"),
+    col = c("blue", "red"), lty = 1, cex = 0.8
+)
+```
+
+### First short test to check, how data can be analysed further
+
+First of all, let us look at the life expectancy in rural and urban areas side by side.\
+We can use T-test to determine whether there is a significant difference in the mean life expectancy between urban and rural populations.
+
+```{r}
+t.test(life_expectancy_rural_urban_df$Life_expectancy_urban, life_expectancy_rural_urban_df$Life_expectancy_rural)
+```
+
+Based on the output of the t-test, it appears that there is no statistically significant difference in the mean life expectancy between the rural and urban populations at a given point in time.\
+This is indicated by the p-value of 0.5395, which is greater than the commonly used significance level of 0.05.\
+This means that there is not enough evidence to reject the null hypothesis, which states that there is no difference in the means of the two groups.
+
+The t-test also provides a 95% confidence interval for the difference in the means, which is (-1.11677, 2.11637).\
+This interval indicates that there is a 95% chance that the true difference in the means falls within this range.\
+It is also worth noting that the t-statistic of 0.61663 is relatively small, which suggests that there is not a strong difference in the means of the two groups.
+
+Overall, the results of the t-test suggest that there is no significant difference in the mean life expectancy between the rural and urban populations at a given point in time.
+
+#### Short summary of the first test
+
+At the moment our analysis does not have any contradictions with our main hypothesis (the growth of the urban population has affected the average life expectancy of the population), since the mean life expectancy in rural and urban areas is not significantly different at any given point in time.
+
+So we can use average life expectancy of whole population as a reference point for further analysis.
+
+### Urban population growth
+
+Now we calculate the percentage of urban population in Finland for each year.
+
+```{r}
+# save urban population percentage for each year in a dataframe
+urban_population_df <- data.frame(Year = years_list, Urban_population = rep(NA, length(years_list)))
+
+# iterate over each year in Year column
+for (year in years_list) {
+    current_year_data <- database[database$Year == year, ]
+
+    # sum up Values and Deaths for each age group based on year
+    current_year_data_summarized <- current_year_data %>%
+        group_by(Area) %>%
+        summarise(Value = sum(Value))
+
+    # print(current_year_data_summarized)
+
+    urban_population <- current_year_data_summarized[current_year_data_summarized$Area == "Urban", "Value"]
+    rural_population <- current_year_data_summarized[current_year_data_summarized$Area == "Rural", "Value"]
+
+    urban_population_df[urban_population_df$Year == year, "Urban_population"] <- (urban_population / (urban_population + rural_population)) * 100
+}
+```
+
+```{r}
+# print urban population percentage for each year
+urban_population_df
+```
+
+```{r}
+# plot urban population percentage for each year
+plot(urban_population_df$Year, urban_population_df$Urban_population,
+    type = "l",
+    xlab = "Year",
+    ylab = "Urban population percentage",
+    main = "Urban population percentage in Finland",
+    col = "blue",
+    lwd = 2,
+)
+```
+
+We can see that urban population percentage in Finland has been growing over the years.
+
+Now we will plot life expectancy and urban population percentage on the same graph.
+
+```{r}
+plot(life_expectancy_df$Year,
+    life_expectancy_df$Life_expectancy,
+    type = "l",
+    xlab = "Year",
+    ylab = "Life expectancy",
+    main = "Life expectancy and urban population percentage in Finland",
+    col = "blue",
+    lwd = 2,
+)
+par(new = TRUE)
+plot(urban_population_df$Year,
+    urban_population_df$Urban_population,
+    type = "l",
+    col = "red",
+    axes = FALSE, xlab = "", ylab = ""
+)
+axis(
+    side = 4,
+    at = pretty(range(urban_population_df$Urban_population)),
+)
+mtext("%", side = 4, line = 1)
+
+legend("topleft",
+    legend = c("Life expectancy", "Urban population percentage"),
+    col = c("blue", "red"), lty = 1, cex = 0.8
+)
+```
+
+### Correlation between life expectancy and urban population percentage
+
+Now we will calculate the correlation between life expectancy and urban population percentage.
+
+```{r}
+cor(life_expectancy_df$Life_expectancy, urban_population_df$Urban_population)
+```
+
+Since the correlation is positive, we can conclude that urban population percentage and life expectancy are positively correlated. It has value of 0.866, which means that there is a strong positive correlation between life expectancy and urban population percentage.
+
+### Linear regression analysis
+
+Now we will apply linear regression analysis: it can be used as the main method to examine the relationship between the growth of the urban population and the average life expectancy over time.
+
+```{r}
+# linear regression analysis
+lm_model <- lm(life_expectancy_df$Life_expectancy ~ urban_population_df$Urban_population)
+summary(lm_model)
+```
+
+Now we will plot the linear regression model.
+
+```{r}
+plot(urban_population_df$Urban_population,
+    life_expectancy_df$Life_expectancy,
+    xlab = "Urban population percentage",
+    ylab = "Life expectancy",
+    main = "Linear regression model",
+    col = "blue",
+    lwd = 2,
+)
+abline(lm_model, col = "green", lwd = 2)
+legend("topleft",
+    legend = c("Linear regression model"),
+    col = c("green"), lty = 1, cex = 0.8
+)
+```
+
+### Summary of results of linear regression analysis
+
+Results of linear regression analysis indicate that there is a positive relationship between urban population and life expectancy over time.\
+This is suggested by the positive coefficient of 0.54 for urban population in the model.
+
+The model also has a high degree of fit, as indicated by the high R-squared value of 0.75.\
+This means that 75% of the variance in life expectancy can be explained by urban population. The adjusted R-squared value is a modified version of R-squared that takes into account the number of variables in the model.\
+In this case, the adjusted R-squared value is slightly lower than the R-squared value, at 0.7429.\
+This suggests that some of the improvement in fit due to the inclusion of the urban population variable may be due to chance, rather than a true relationship.
+
+The p-value for the urban population coefficient is very small (8.9e-12), which indicates that the relationship between urban population and life expectancy is statistically significant at a very high level of confidence. In other words, it is very unlikely that this relationship is due to chance.
+
+### Conclusion:
+
+Overall, these results support the hypothesis that there is a relationship between the growth of the urban population and the average life expectancy over time.\
+This relationship is positive, meaning that as urban population increases, life expectancy tends to increase as well.
+
+### Limitations of the analysis
+
+It is important to note that the results of this analysis do not necessarily mean that urbanization causes increased life expectancy.\
+There may be other factors that are correlated with both urbanization and life expectancy, and it is possible that these factors are driving the relationship that was observed in the data.\
+For example, it is possible that increase in urban population is correlated with increased access to healthcare (more clinics are created in urban areas and they become more affordable, etc.), which in turn is correlated with increased life expectancy for both, urban and rural populations.
+
+But in any case, the results of this analysis suggest that there is a positive relationship between urban population rise and life expectancy over time.
