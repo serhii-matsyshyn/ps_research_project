@@ -8,58 +8,49 @@ output:
 
 # P&S-2022: Mini-Research Project
 
-Team: Serhii Matsyshyn, Serhii Ivanov  
+Team: Serhii Matsyshyn, Serhii Ivanov\
 [GitHub repository with the project](https://github.com/serhii-matsyshyn/ps_research_project)
 
-
 ## Research aim
-The aim of this research project is to examine the potential relationship between age structure of the population and other demographic factors.  
-These factors include birth rate, population aging, urbanization, average life expectancy.  
-We will be testing two hypotheses in order to explore these potential relationships.  
 
-Hypothesis (1): the birth rate changes depending on the population ageing.  
-This means that we expect to see a relationship between the proportion of elderly individuals in a population and the overall birth rate.  
+The aim of this research project is to examine the potential relationship between age structure of the population and other demographic factors.\
+These factors include birth rate, population aging, urbanization, average life expectancy.\
+We will be testing two hypotheses in order to explore these potential relationships.
 
-Hypothesis (2): the growth of the urban population has affected the average life expectancy of the population.  
-This hypothesis suggests that there may be a relationship between the degree of urbanization in a population and its average life expectancy.  
+Hypothesis (1): the birth rate changes depending on the population ageing.\
+This means that we expect to see a relationship between the proportion of elderly individuals in a population and the overall birth rate.
 
-To test these hypotheses, we will use the following datasets.  
+Hypothesis (2): the growth of the urban population has affected the average life expectancy of the population.\
+This hypothesis suggests that there may be a relationship between the degree of urbanization in a population and its average life expectancy.
+
+To test these hypotheses, we will use the following datasets.
 
 ## Datasets
-We will use publicly available data from the United Nations Department
-of Economic and Social Affairs. They provide a wide range of datasets
-concerning almost all aspects of demography.  
-We will combine two datasets ([“Population by age, sex, and urban/rural
-residence”](http://data.un.org/Data.aspx?d=POP&f=tableCode%3A22)
-and [“Deaths by age, sex, and urban/rural residence”](http://data.un.org/Data.aspx?q=death&d=POP&f=tableCode%3a7))
-to have a dataset consisting of countries, census years, urban/rural residence, gender, age
-groups, the number of people in each group, and the number of deaths for each
-age group.  
-  
-Using such a wide dataset allows us to obtain new intermediate
-parameters (for example, the percentage of the urban/rural population grouped
-by other demographic parameters). That is, in the final result, this enriched
-dataset can be supplemented by us with new parameters, which can help us find
-interesting dependencies.  
+
+We will use publicly available data from the United Nations Department of Economic and Social Affairs. They provide a wide range of datasets concerning almost all aspects of demography.\
+We will combine two datasets (["Population by age, sex, and urban/rural residence"](http://data.un.org/Data.aspx?d=POP&f=tableCode%3A22) and ["Deaths by age, sex, and urban/rural residence"](http://data.un.org/Data.aspx?q=death&d=POP&f=tableCode%3a7)) to have a dataset consisting of countries, census years, urban/rural residence, gender, age groups, the number of people in each group, and the number of deaths for each age group.
+
+Using such a wide dataset allows us to obtain new intermediate parameters (for example, the percentage of the urban/rural population grouped by other demographic parameters). That is, in the final result, this enriched dataset can be supplemented by us with new parameters, which can help us find interesting dependencies.
 
 ## Dataset preparation
-One of the main problems with the dataset is that it is not very convenient to work with it in its current form.  
-For example, there are duplicate rows in the dataset, or several census types on the same year.  
-What more, there are various (different for each year/country) age groups, and some of them are half-duplicates (for example, 0, 0-4, 1-4).  
 
-That is why we will need to prepare the dataset before we can start working with it.  
+One of the main problems with the dataset is that it is not very convenient to work with it in its current form.\
+For example, there are duplicate rows in the dataset, or several census types on the same year.\
+What more, there are various (different for each year/country) age groups, and some of them are half-duplicates (for example, 0, 0-4, 1-4).
 
-To do this, we have created a Python scripts that perform the following actions:  
-- Clean main dataset from duplicates and unnecessary columns  
-- Extract information about particular country from both datasets  
-- Clean and normalize age groups, census types for this country  
+That is why we will need to prepare the dataset before we can start working with it.
+
+To do this, we have created a Python scripts that perform the following actions:\
+- Clean main dataset from duplicates and unnecessary columns\
+- Extract information about particular country from both datasets\
+- Clean and normalize age groups, census types for this country\
 - Merge two datasets into one
 
-We have chosen following countries for our research:  
-- Bulgaria  
-- Hungary  
-- Poland  
-- Finland  
+We have chosen following countries for our research:\
+- Bulgaria\
+- Hungary\
+- Poland\
+- Finland
 
 ## Hypothesis (1): the birth rate changes depending on the population ageing.
 
@@ -259,15 +250,16 @@ Thus we have a linear regression model that explains a lot of variance of a birt
 The the birth rate depends on population mean age and age structure. The increase in age is followed by decrease in birthrate and increase in proportion of people, who can reproduce, is followed by increase in the birthrate.
 
 ## Hypothesis (2): The growth of the urban population has affected the average life expectancy of the population.
-Task: to test this hypothesis on the example of one country.  
-Parameters that will be analyzed: indicators of the place of residence (rural area/urban area); average life expectancy.  
 
-Research directions:  
-- analysis of changes in the urban population over time;  
-- analysis of changes in average life expectancy over time;  
-- to compare the dependence between time changes of the investigated indicators;  
-- trace the linear relationship between these characteristics (linear regression analysis);  
-- visualization of research data.  
+Task: to test this hypothesis on the example of one country.\
+Parameters that will be analyzed: indicators of the place of residence (rural area/urban area); average life expectancy.
+
+Research directions:\
+- analysis of changes in the urban population over time;\
+- analysis of changes in average life expectancy over time;\
+- to compare the dependence between time changes of the investigated indicators;\
+- trace the linear relationship between these characteristics (linear regression analysis);\
+- visualization of research data.
 
 ```{r}
 # install.packages("PHEindicatormethods")
@@ -282,6 +274,7 @@ library(dplyr)
 ```
 
 We have chosen Finland to test this hypothesis.
+
 ```{r}
 # csv file reading
 database_filename <- "final_datasets/Finland_combined__years_with_nan_dropped_True_born_sum.csv"
@@ -293,17 +286,19 @@ database <- read.csv(database_filename, header = TRUE, sep = ",")
 head(database, 100)
 ```
 
-The data present in dataset for Finland is from 1966 to 2021 years.  
+The data present in dataset for Finland is from 1966 to 2021 years.
+
 ```{r}
 years_list <- unique(database$Year)
 years_list
 ```
 
 ### Life expectancy
-We will use "life expectancy at birth" indicator.  
-It is calculated as the average number of years a born child would live if prevailing patterns of mortality at the time of birth were to stay the same throughout the life.  
-We will use "life expectancy at birth" since it is the most commonly used measure of an average life expectancy of a population.  
-We will use library [PHEindicatormethods](https://cran.r-project.org/web/packages/PHEindicatormethods/index.html) to calculate life expectancy. It was slightly modified to work with our data (to accept 0-4 years group, which is suitable in our case).  
+
+We will use "life expectancy at birth" indicator.\
+It is calculated as the average number of years a born child would live if prevailing patterns of mortality at the time of birth were to stay the same throughout the life.\
+We will use "life expectancy at birth" since it is the most commonly used measure of an average life expectancy of a population.\
+We will use library [PHEindicatormethods](https://cran.r-project.org/web/packages/PHEindicatormethods/index.html) to calculate life expectancy. It was slightly modified to work with our data (to accept 0-4 years group, which is suitable in our case).
 
 ```{r}
 # save life expectancy for each year in a dataframe
@@ -345,6 +340,7 @@ for (year in years_list) {
 ```
 
 We calculated life expectancy for each year.
+
 ```{r}
 # print life expectancy for each year
 life_expectancy_df
@@ -361,9 +357,11 @@ plot(life_expectancy_df$Year, life_expectancy_df$Life_expectancy,
     lwd = 2,
 )
 ```
+
 We can see that life expectancy in Finland has been growing over the years.
 
 Now let's see how life expectancy has changed in rural and urban areas.
+
 ```{r}
 # save life expectancy for each year in a dataframe
 life_expectancy_rural_urban_df <- data.frame(Year = years_list, Life_expectancy = rep(NA, length(years_list)))
@@ -470,30 +468,33 @@ legend("topleft",
 
 ### First short test to check, how data can be analysed further
 
-First of all, let us look at the life expectancy in rural and urban areas side by side.  
+First of all, let us look at the life expectancy in rural and urban areas side by side.\
 We can use T-test to determine whether there is a significant difference in the mean life expectancy between urban and rural populations.
+
 ```{r}
 t.test(life_expectancy_rural_urban_df$Life_expectancy_urban, life_expectancy_rural_urban_df$Life_expectancy_rural)
 ```
 
-Based on the output of the t-test, it appears that there is no statistically significant difference in the mean life expectancy between the rural and urban populations at a given point in time.  
-This is indicated by the p-value of 0.5395, which is greater than the commonly used significance level of 0.05.  
+Based on the output of the t-test, it appears that there is no statistically significant difference in the mean life expectancy between the rural and urban populations at a given point in time.\
+This is indicated by the p-value of 0.5395, which is greater than the commonly used significance level of 0.05.\
 This means that there is not enough evidence to reject the null hypothesis, which states that there is no difference in the means of the two groups.
 
-The t-test also provides a 95% confidence interval for the difference in the means, which is (-1.11677, 2.11637).  
-This interval indicates that there is a 95% chance that the true difference in the means falls within this range.  
-It is also worth noting that the t-statistic of 0.61663 is relatively small, which suggests that there is not a strong difference in the means of the two groups.  
+The t-test also provides a 95% confidence interval for the difference in the means, which is (-1.11677, 2.11637).\
+This interval indicates that there is a 95% chance that the true difference in the means falls within this range.\
+It is also worth noting that the t-statistic of 0.61663 is relatively small, which suggests that there is not a strong difference in the means of the two groups.
 
 Overall, the results of the t-test suggest that there is no significant difference in the mean life expectancy between the rural and urban populations at a given point in time.
 
 #### Short summary of the first test
-At the moment our analysis does not have any contradictions with our main hypothesis (the growth of the urban population has affected the average life expectancy of the population),
-since the mean life expectancy in rural and urban areas is not significantly different at any given point in time.  
+
+At the moment our analysis does not have any contradictions with our main hypothesis (the growth of the urban population has affected the average life expectancy of the population), since the mean life expectancy in rural and urban areas is not significantly different at any given point in time.
 
 So we can use average life expectancy of whole population as a reference point for further analysis.
 
 ### Urban population growth
+
 Now we calculate the percentage of urban population in Finland for each year.
+
 ```{r}
 # save urban population percentage for each year in a dataframe
 urban_population_df <- data.frame(Year = years_list, Urban_population = rep(NA, length(years_list)))
@@ -536,6 +537,7 @@ plot(urban_population_df$Year, urban_population_df$Urban_population,
 We can see that urban population percentage in Finland has been growing over the years.
 
 Now we will plot life expectancy and urban population percentage on the same graph.
+
 ```{r}
 plot(life_expectancy_df$Year,
     life_expectancy_df$Life_expectancy,
@@ -566,17 +568,18 @@ legend("topleft",
 ```
 
 ### Correlation between life expectancy and urban population percentage
+
 Now we will calculate the correlation between life expectancy and urban population percentage.
+
 ```{r}
 cor(life_expectancy_df$Life_expectancy, urban_population_df$Urban_population)
 ```
 
-Since the correlation is positive, we can conclude that urban population percentage and life expectancy are positively correlated.
-It has value of 0.866, which means that there is a strong positive correlation between life expectancy and urban population percentage.
+Since the correlation is positive, we can conclude that urban population percentage and life expectancy are positively correlated. It has value of 0.866, which means that there is a strong positive correlation between life expectancy and urban population percentage.
 
 ### Linear regression analysis
-Now we will apply linear regression analysis: it can be used as the main method to examine the relationship
-between the growth of the urban population and the average life expectancy over time.
+
+Now we will apply linear regression analysis: it can be used as the main method to examine the relationship between the growth of the urban population and the average life expectancy over time.
 
 ```{r}
 # linear regression analysis
@@ -585,6 +588,7 @@ summary(lm_model)
 ```
 
 Now we will plot the linear regression model.
+
 ```{r}
 plot(urban_population_df$Urban_population,
     life_expectancy_df$Life_expectancy,
@@ -602,26 +606,28 @@ legend("topleft",
 ```
 
 #### Summary of results of linear regression analysis
-Results of linear regression analysis indicate that there is a positive relationship between urban population and life expectancy over time.  
-This is suggested by the positive coefficient of 0.54 for urban population in the model. 
 
-The model also has a high degree of fit, as indicated by the high R-squared value of 0.75.  
-This means that 75% of the variance in life expectancy can be explained by urban population. 
-The adjusted R-squared value is a modified version of R-squared that takes into account the number of variables in the model.  
-In this case, the adjusted R-squared value is slightly lower than the R-squared value, at 0.7429.  
+Results of linear regression analysis indicate that there is a positive relationship between urban population and life expectancy over time.\
+This is suggested by the positive coefficient of 0.54 for urban population in the model.
+
+The model also has a high degree of fit, as indicated by the high R-squared value of 0.75.\
+This means that 75% of the variance in life expectancy can be explained by urban population. The adjusted R-squared value is a modified version of R-squared that takes into account the number of variables in the model.\
+In this case, the adjusted R-squared value is slightly lower than the R-squared value, at 0.7429.\
 This suggests that some of the improvement in fit due to the inclusion of the urban population variable may be due to chance, rather than a true relationship.
-  
-The p-value for the urban population coefficient is very small (8.9e-12), which indicates that the relationship between urban population and life expectancy is statistically significant at a very high level of confidence. In other words, it is very unlikely that this relationship is due to chance.  
-  
-Overall, these results support the hypothesis that there is a relationship between the growth of the urban population and the average life expectancy over time.  
+
+The p-value for the urban population coefficient is very small (8.9e-12), which indicates that the relationship between urban population and life expectancy is statistically significant at a very high level of confidence. In other words, it is very unlikely that this relationship is due to chance.
+
+Overall, these results support the hypothesis that there is a relationship between the growth of the urban population and the average life expectancy over time.\
 This relationship is positive, meaning that as urban population increases, life expectancy tends to increase as well.
 
 ### Limitations of the analysis
-It is important to note that the results of this analysis do not necessarily mean that urbanization causes increased life expectancy.  
-There may be other factors that are correlated with both urbanization and life expectancy, and it is possible that these factors are driving the relationship that was observed in the data.  
-For example, it is possible that increase in urban population is correlated with increased access to healthcare (more clinics are created in urban areas and they become more affordable, etc.), which in turn is correlated with increased life expectancy for both, urban and rural populations.  
+
+It is important to note that the results of this analysis do not necessarily mean that urbanization causes increased life expectancy.\
+There may be other factors that are correlated with both urbanization and life expectancy, and it is possible that these factors are driving the relationship that was observed in the data.\
+For example, it is possible that increase in urban population is correlated with increased access to healthcare (more clinics are created in urban areas and they become more affordable, etc.), which in turn is correlated with increased life expectancy for both, urban and rural populations.
 
 But in any case, the results of this analysis suggest that there is a positive relationship between urban population rise and life expectancy over time.
 
 # Conclusions of the research
+
 TODO: write conclusions of the research
