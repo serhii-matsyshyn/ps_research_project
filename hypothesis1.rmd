@@ -1,0 +1,200 @@
+```{r}
+require(dplyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+Poland <- read.csv("final_datasets/Poland_combined__years_with_nan_dropped_True.csv")
+Hungary <- read.csv("final_datasets/Hungary_combined__years_with_nan_dropped_True.csv")
+Bulgaria <- read.csv("final_datasets/Bulgaria_combined__years_with_nan_dropped_True.csv")
+```
+
+Hypothesis: the birth rate changes depending on the population ageing
+
+Fixing the dataset to include age as integer and not as a category
+
+```{r}
+fix.age <- function(df) {
+  vec = c()
+  for (age in df$Age) {
+    if (grepl("80", age)) {
+      vec <- append(vec, 80)
+    }
+    else {
+      vec <-append(vec, mean(as.integer(unlist(strsplit(age, "-")))))
+    }
+  }
+    return (vec)
+}
+
+Poland$Age.Int <- fix.age(Poland)
+Hungary$Age.Int <- fix.age(Hungary)
+Bulgaria$Age.Int <- fix.age(Bulgaria)
+
+```
+
+Extracting the birthrate, mean age
+
+```{r}
+get.data <- function(Country) {
+  yrs = unique(Country$Year)
+  birth.rates = c()
+  mean.ages = c()
+  for (yr in yrs) {
+    by.year = (filter(Country, Year==yr))
+    total.pop = sum(filter(by.year, Age.Int!=0.0)$Value)
+    people.born = sum(filter(by.year, Age.Int==0.0)$Value)
+    birth.rate = people.born/total.pop * 100
+    mean.age = sum(filter(by.year, Age.Int!=0.0)$Value * filter(by.year, Age.Int!=0.0)$Age.Int)/total.pop
+    birth.rates <- append(birth.rates, birth.rate)
+    mean.ages <- append(mean.ages, mean.age)
+  }
+  data = data.frame(year = yrs, birth.rate = birth.rates, mean.age = mean.ages)
+  return(data)
+}
+
+data.Poland <- get.data(Poland)
+data.Hungary <- get.data(Hungary)
+data.Bulgaria <- get.data(Bulgaria)
+```
+
+```{r}
+data.Poland
+```
+
+Constructing a linear model to see the relationship between mean.age and birth.rate
+
+```{r}
+plot.Country.mean.age <- function(data.Country, name) {
+  data.Country.lm <- lm(birth.rate ~mean.age, data = data.Country) 
+  plot(data.Country$mean.age, data.Country$birth.rate, col = "blue", pch = 16, main = name, cex = 1.5, xlim = c(30, 45), ylim = c(0.8, 2.2), xlab="mean.age", ylab="birth.rate")
+  
+  abline(data.Country.lm, col = "red", lwd = 2)
+  return(data.Country.lm)
+}
+
+data.Poland.lm.mean.age <- plot.Country.mean.age(data.Poland, "Poland")
+data.Hungary.lm.mean.age <- plot.Country.mean.age(data.Hungary, "Hungary")
+data.Bulgaria.lm.mean.age <- plot.Country.mean.age(data.Bulgaria, "Bulgaria")
+```
+
+```{r}
+summary(data.Poland.lm.mean.age)
+```
+
+The p-value of the intercept and the coefficient is small, so we reject that they're insignificant. The determination coefficient (0.7046) suggests that the model is pretty accurate
+
+For Bulgaria and Hungary we got $r^2 =0.8755$ and $r^2 =0.6537$ respectively
+
+The graphs form a curve, so there might be other dependencies
+
+For example, the population structure
+
+Lets see how the proportion of people who are capable of making children affects the birthrate
+
+```{r}
+get.structure <- function(Country, age.low, age.high) {
+    yrs = unique(Country$Year)
+  reproducible.age.proportions = c()
+  for (yr in yrs) {
+    by.year = (filter(Country, Year==yr))
+    total.pop = sum(filter(by.year, Age.Int!=0.0)$Value)
+    reproducible.age.proportion = sum(filter(by.year, Age.Int>=age.low & Age.Int<=age.high)$Value)/total.pop*100
+    reproducible.age.proportions <-append(reproducible.age.proportions, reproducible.age.proportion)
+  }
+  return (reproducible.age.proportions)
+}
+
+
+data.Poland$reproduce <- get.structure(Poland, 17, 50)
+data.Hungary$reproduce <- get.structure(Hungary, 17, 50)
+data.Bulgaria$reproduce <- get.structure(Bulgaria, 17, 50)
+```
+
+Its important to choose the age range. Let it be 17-50
+
+```{r}
+plot.Country.reproduce <- function(data.Country, name) {
+  data.Country.lm <- lm(birth.rate ~reproduce, data = data.Country) 
+  plot(data.Country$reproduce, data.Country$birth.rate, col = "blue", pch = 16, main = name, cex = 1.5, xlim = c(0,100), ylim = c(0.8, 2.2), xlab="reproduce", ylab="birth.rate")
+  
+  abline(data.Country.lm, col = "red", lwd = 2)
+  return(data.Country.lm)
+}
+
+data.Hungary.lm.reproduce<- plot.Country.reproduce(data.Hungary, "Hungary")
+```
+
+Looking at the plot, one can see that this model doesn't make much sense
+
+```{r}
+summary(data.Hungary.lm.reproduce)
+```
+
+Just to be sure, the p-value suggests that we cannot reject that the coefficients are zero
+
+But what if we use instead more "productive" years?
+
+```{r}
+data.Poland$reproduce <- get.structure(Poland, 17, 40)
+data.Hungary$reproduce <- get.structure(Hungary, 17, 40)
+data.Bulgaria$reproduce <- get.structure(Bulgaria, 17, 40)
+```
+
+```{r}
+data.Poland.lm.reproduce <- plot.Country.reproduce(data.Poland, "Poland")
+data.Hungary.lm.reproduce <- plot.Country.reproduce(data.Hungary, "Hungary")
+data.Bulgaria.lm.reproduce <- plot.Country.reproduce(data.Bulgaria, "Bulgaria")
+```
+
+Immedeatly, the model looks much more better
+
+```{r}
+summary(data.Poland.lm.reproduce)
+```
+
+The determination coefficient is even better than the one for model using only mean age (0.7647 vs 0.6537)
+
+Poland: 0.868
+
+Bulgraria: 0.7693
+
+Combining the knowledge of population age structure and mean age produces an accurate multilinear model
+
+```{r}
+
+data.Poland.lm <- lm(birth.rate ~reproduce + mean.age, data = data.Poland)
+data.Hungary.lm <- lm(birth.rate ~reproduce + mean.age, data = data.Hungary) 
+data.Bulgaria.lm <- lm(birth.rate ~reproduce + mean.age, data = data.Bulgaria) 
+```
+
+```{r}
+summary(data.Poland.lm)
+```
+
+```{r}
+summary(data.Hungary.lm)
+```
+
+```{r}
+summary(data.Bulgaria.lm)
+```
+
+R-squared Poland: 0.9204
+
+R-squared Hungary: 0.9022
+
+R-squared Bulgaria: 0.9065
+
+In three cases mean.age coefficient is similar
+
+Conclusion:
+
+The the birth rate depends on population mean age and age structure. The increase in age is followed by decrease in birthrate and increase in proportion of people, who can reproduce, is followed by increase in the birthrate.
+
+```{r}
+plot(data.Poland$year, data.Poland$birth.rate, col = "blue", pch = 16, main = "Poland", cex = 1.5, xlim = c(1960, 2010), ylim = c(0.8, 2.2), xlab="mean.age", ylab="birth.rate")
+```
+
+The birthrate improved a little around the time the countries joined the EU, so population age might not be the only factor in the birthrate
