@@ -89,7 +89,11 @@ For Bulgaria and Hungary we got $r^2 =0.8755$ and $r^2 =0.6537$ respectively
 
 The graphs form a curve, so there might be other dependencies
 
-For example, the population structure
+```{r}
+plot(data.Poland$year, data.Poland$birth.rate, col = "blue", pch = 16, main = "Poland", cex = 1.5, xlim = c(1960, 2010), ylim = c(0.8, 2.2), xlab="year", ylab="birth.rate")
+```
+
+For example, the birthrate improved a little around the time the countries joined the EU, so population age might not be the only factor in the birthrate
 
 Lets see how the proportion of people who are capable of making children affects the birthrate
 
@@ -134,7 +138,7 @@ summary(data.Hungary.lm.reproduce)
 
 Just to be sure, the p-value suggests that we cannot reject that the coefficients are zero
 
-But what if we use instead more "productive" years?
+But what if we use instead more "productive" ages (17-40)?
 
 ```{r}
 data.Poland$reproduce <- get.structure(Poland, 17, 40)
@@ -154,11 +158,11 @@ Immedeatly, the model looks much more better
 summary(data.Poland.lm.reproduce)
 ```
 
-The determination coefficient is even better than the one for model using only mean age (0.7647 vs 0.6537)
+The determination coefficient is even better than the one for model using only mean age (0.7647 vs 0.6537) (as well as t-values)
 
 Poland: 0.868
 
-Bulgraria: 0.7693
+Bulgaria: 0.7693
 
 Combining the knowledge of population age structure and mean age produces an accurate multilinear model
 
@@ -187,14 +191,9 @@ R-squared Hungary: 0.9022
 
 R-squared Bulgaria: 0.9065
 
-In three cases mean.age coefficient is similar
+Thus we have a linear regression model that explains a lot of variance of a birthrate
 
 Conclusion:
 
 The the birth rate depends on population mean age and age structure. The increase in age is followed by decrease in birthrate and increase in proportion of people, who can reproduce, is followed by increase in the birthrate.
 
-```{r}
-plot(data.Poland$year, data.Poland$birth.rate, col = "blue", pch = 16, main = "Poland", cex = 1.5, xlim = c(1960, 2010), ylim = c(0.8, 2.2), xlab="mean.age", ylab="birth.rate")
-```
-
-The birthrate improved a little around the time the countries joined the EU, so population age might not be the only factor in the birthrate
