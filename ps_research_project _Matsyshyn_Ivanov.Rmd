@@ -6,8 +6,6 @@ output:
     df_print: paged
 ---
 
-# P&S-2022: Mini-Research Project
-
 Team: Serhii Matsyshyn, Serhii Ivanov\
 [GitHub repository with the project](https://github.com/serhii-matsyshyn/ps_research_project)
 
@@ -605,7 +603,7 @@ legend("topleft",
 )
 ```
 
-#### Summary of results of linear regression analysis
+### Summary of results of linear regression analysis
 
 Results of linear regression analysis indicate that there is a positive relationship between urban population and life expectancy over time.\
 This is suggested by the positive coefficient of 0.54 for urban population in the model.
@@ -617,6 +615,8 @@ This suggests that some of the improvement in fit due to the inclusion of the ur
 
 The p-value for the urban population coefficient is very small (8.9e-12), which indicates that the relationship between urban population and life expectancy is statistically significant at a very high level of confidence. In other words, it is very unlikely that this relationship is due to chance.
 
+### Conclusion:
+
 Overall, these results support the hypothesis that there is a relationship between the growth of the urban population and the average life expectancy over time.\
 This relationship is positive, meaning that as urban population increases, life expectancy tends to increase as well.
 
@@ -627,7 +627,3 @@ There may be other factors that are correlated with both urbanization and life e
 For example, it is possible that increase in urban population is correlated with increased access to healthcare (more clinics are created in urban areas and they become more affordable, etc.), which in turn is correlated with increased life expectancy for both, urban and rural populations.
 
 But in any case, the results of this analysis suggest that there is a positive relationship between urban population rise and life expectancy over time.
-
-# Conclusions of the research
-
-TODO: write conclusions of the research
